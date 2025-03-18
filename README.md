@@ -3,7 +3,7 @@ Domoticz LG ThinQ (with WideQ) plugin. Addon Refrigerator part
 
 # :fire: NEW! Energy history script -> scroll [down below](#energy-history-script)
 
-![alt text](![image](https://github.com/user-attachments/assets/2caf9fd7-a5ed-4379-b53a-07deb263a64f)")
+![image](https://github.com/user-attachments/assets/6a0869e3-dc35-4e2f-8ca6-6b7b60589a8e)
 
 :warning: **New users of LG ThinQ**: This library only works with v2 of the LG ThinQ API. You can check if your device is compatible when you execute the `example.py`. To use it, provide it with a country and language code via the `-c` and `-l` flags, respectively:
 
