@@ -1,11 +1,9 @@
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/majki09)
-
-Domoticz LG ThinQ (with WideQ) plugin.
+Domoticz LG ThinQ (with WideQ) plugin. Addon Refrigerator part
 =====
 
 # :fire: NEW! Energy history script -> scroll [down below](#energy-history-script)
 
-![alt text](https://raw.githubusercontent.com/majki09/domoticz_lg_thinq_plugin/main/domoticz.jpg "LG ThinQ plugin in domoticz")
+![alt text](![image](https://github.com/user-attachments/assets/2caf9fd7-a5ed-4379-b53a-07deb263a64f)")
 
 :warning: **New users of LG ThinQ**: This library only works with v2 of the LG ThinQ API. You can check if your device is compatible when you execute the `example.py`. To use it, provide it with a country and language code via the `-c` and `-l` flags, respectively:
 
