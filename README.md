@@ -1,7 +1,7 @@
 Domoticz LG ThinQ (with WideQ) plugin. Addon Refrigerator part
 =====
 
-# :fire: NEW! Energy history script -> scroll [down below](#energy-history-script)
+# :fire: NEW! Addon Refrigerator part
 
 ![image](https://github.com/user-attachments/assets/6a0869e3-dc35-4e2f-8ca6-6b7b60589a8e)
 
