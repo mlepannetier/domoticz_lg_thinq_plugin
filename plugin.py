@@ -429,6 +429,16 @@ class BasePlugin:
                 try:
                     self.lg_device_status = self.lg_device.get_status()
                     
+                    # Refrigerator part
+                    if self.DEVICE_TYPE == "type_fridge":
+                        self.temp_refrigerator = str(self.lg_device_status.temp_refrigerator_c)
+                        self.temp_freezer = str(self.lg_device_status.temp_freezer_c)
+                        self.ice_plus_mode = self.lg_device_status.ice_plus_status.value
+                        self.fresh_air_filter = self.lg_device_status.fresh_air_filter_status.value
+                        self.door_opened = self.lg_device_status.door_opened
+                        self.energy_saving = self.lg_device_status.energy_saving_enabled
+                        self.water_filter_used = str(self.lg_device_status.water_filter_used_month)
+                    
                     # AC part
                     if self.DEVICE_TYPE == "type_ac":
                         self.operation = self.lg_device_status.is_on
@@ -473,6 +483,61 @@ class BasePlugin:
         
     def update_domoticz(self):
         # import web_pdb; web_pdb.set_trace()
+        
+        # Refrigerator part
+        if self.DEVICE_TYPE == "type_fridge":
+
+            # Update refrigerator temperature
+            if Devices[1].sValue != self.temp_refrigerator:
+                Devices[1].Update(nValue=0, sValue=self.temp_refrigerator)
+                Domoticz.Log(f"Refrigerator temperature updated: {self.temp_refrigerator}°C")
+
+            # Update freezer temperature
+            if Devices[2].sValue != self.temp_freezer:
+                Devices[2].Update(nValue=0, sValue=self.temp_freezer)
+                Domoticz.Log(f"Freezer temperature updated: {self.temp_freezer}°C")
+
+            # Update IcePlus mode
+            ice_plus_map = {
+                "@CP_OFF_EN_W": "10",
+                "@RE_TERM_ICE_PLUS_W": "20",
+                "@RE_MAIN_SPEED_FREEZE_TERM_W": "30"
+            }
+            ice_plus_value = ice_plus_map.get(self.ice_plus_mode, "0")
+            if Devices[3].sValue != ice_plus_value:
+                Devices[3].Update(nValue=1, sValue=ice_plus_value)
+                Domoticz.Log(f"IcePlus mode updated: {ice_plus_value}")
+
+            # Update Fresh Air Filter status
+            fresh_air_filter_map = {
+                "@CP_TERM_OFF_KO_W": "10",
+                "@RE_STATE_FRESH_AIR_FILTER_MODE_AUTO_W": "20",
+                "@RE_STATE_FRESH_AIR_FILTER_MODE_POWER_W": "30",
+                "@RE_STATE_REPLACE_FILTER_W": "40",
+                "@RE_STATE_SMART_SMART_CARE_ON": "50"
+            }
+            fresh_air_filter_value = fresh_air_filter_map.get(self.fresh_air_filter, "0")
+            if Devices[4].sValue != fresh_air_filter_value:
+                Devices[4].Update(nValue=1, sValue=fresh_air_filter_value)
+                Domoticz.Log(f"Fresh Air Filter updated: {fresh_air_filter_value}")
+
+            # Update door status (0 = closed, 1 = open)
+            door_status = 1 if self.door_opened else 0
+            if Devices[5].nValue != door_status:
+                Devices[5].Update(nValue=door_status, sValue=str(door_status))
+                Domoticz.Log(f"Door status updated: {'Open' if door_status else 'Closed'}")
+
+            # Update energy saving mode (0 = off, 1 = on)
+            energy_saving_status = 1 if self.energy_saving else 0
+            if Devices[6].nValue != energy_saving_status:
+                Devices[6].Update(nValue=energy_saving_status, sValue=str(energy_saving_status))
+                Domoticz.Log(f"Energy Saving Mode updated: {'On' if energy_saving_status else 'Off'}")
+
+            # Update water filter usage (in months)
+            if Devices[7].sValue != self.water_filter_used:
+                Devices[7].Update(nValue=0, sValue=self.water_filter_used)
+                Domoticz.Log(f"Water Filter usage updated: {self.water_filter_used} months")
+        
         # AC part
         if self.DEVICE_TYPE == "type_ac":
             # Operation
