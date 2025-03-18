@@ -7,14 +7,14 @@
 """
 <plugin key="LG_ThinQ" name="LG ThinQ" author="majki" version="2.2.2" externallink="https://github.com/majki09/domoticz_lg_thinq_plugin">
     <description>
-        <h2>LG ThinQ domoticz plugin</h2><br/>
-        Plugin uses LG API v2. All API interface (with some mods) comes from <a href="https://github.com/no2chem/wideq"> github.com/no2chem/wideq</a>.<br/><br/>
+        <h2>LG ThinQ Domoticz Plugin</h2><br/>
+        Plugin uses LG API v2. The entire API interface (with some modifications) comes from <a href="https://github.com/no2chem/wideq">github.com/no2chem/wideq</a>.<br/><br/>
         <h3>Features</h3>
         <ul style="list-style-type:square">
-            <li>Reading unit parameters from LG ThinQ API</li>
-            <li>Control unit with LG ThinQ API</li>
+            <li>Reading device parameters from the LG ThinQ API</li>
+            <li>Controlling devices using the LG ThinQ API</li>
         </ul>
-        <h3>Tested and working devices</h3>
+        <h3>Tested and Working Devices</h3>
         <h4>Air Conditioners (AC)</h4>
         <ul style="list-style-type:square">
             <li>LG AP12RT NSJ</li>
@@ -22,23 +22,28 @@
         </ul>
         <h4>Air-to-Water Heat Pumps (AWHP)</h4>
         <ul style="list-style-type:square">
-            <li>LG therma V 7kW HN0916M NK4</li>
+            <li>LG Therma V 7kW HN0916M NK4</li>
+        </ul>
+        <h4>Refrigerators</h4>
+        <ul style="list-style-type:square">
+            <li>LG ThinQ Refrigerator</li>
         </ul>
         <br/>
     </description>
     <params>
-        <param field="Mode3" label="country" width="50px" />
-        <param field="Mode4" label="language" width="50px" />
+        <param field="Mode3" label="Country" width="50px" />
+        <param field="Mode4" label="Language" width="50px" />
         <param field="Mode6" label="Debug" width="75px">
             <options>
                 <option label="True" value="Debug"/>
                 <option label="False" value="Normal" default="true" />
             </options>
         </param>
-        <param field="Mode1" label="Device type" width="270px">
+        <param field="Mode1" label="Device Type" width="270px">
             <options>
                 <option label="Air Conditioning (AC)" value="type_ac" default="true" />
-                <option label="Air to Water Heat Pump (AWHP)" value="type_awhp" default="false" />
+                <option label="Air-to-Water Heat Pump (AWHP)" value="type_awhp" default="false" />
+                <option label="Refrigerator" value="type_fridge" default="false" />
             </options>
         </param>
         <param field="Mode2" label="Device ID" width="270px"/>
@@ -112,7 +117,38 @@ class BasePlugin:
 
         if self.lg_device is None:
             return False
-
+            
+        # Refrigerator part
+        if self.DEVICE_TYPE == "type_fridge":
+            Domoticz.Log("Getting Refrigerator status successful.")
+            if len(Devices) == 0:
+                Domoticz.Device(Name="Temp Réfrigérateur", Unit=1, TypeName="Temperature", Used=1).Create()
+                Domoticz.Device(Name="Temp Congélateur", Unit=2, TypeName="Temperature", Used=1).Create()
+                
+                Options = {
+                    "LevelActions": "|||",
+                    "LevelNames": "|Off|IcePlus|Freeze",
+                    "LevelOffHidden": "true",
+                    "SelectorStyle": "0"
+                }
+                Domoticz.Device(Name="Mode IcePlus", Unit=3, TypeName="Selector Switch", Image=16, Options=Options, Used=1).Create()
+                
+                Options = {
+                    "LevelActions": "|||||",
+                    "LevelNames": "|Off|Auto|Power|Replace Filter|SmartCare",
+                    "LevelOffHidden": "true",
+                    "SelectorStyle": "0"
+                }
+                Domoticz.Device(Name="Filtre Air", Unit=4, TypeName="Selector Switch", Image=16, Options=Options, Used=1).Create()
+                
+                Domoticz.Device(Name="Porte ouverte", Unit=5, TypeName="Switch", Image=9, Used=1).Create()
+                
+                Domoticz.Device(Name="Mode Économie", Unit=6, TypeName="Switch", Image=16, Used=1).Create()
+                
+                Domoticz.Device(Name="Filtre Eau (Mois Utilisés)", Unit=7, Type=243, Subtype=31, Used=1).Create()
+                
+                Domoticz.Log("LG ThinQ Refrigerator device created.")
+                
         # AC part
         if self.DEVICE_TYPE == "type_ac":
             Domoticz.Log("Getting AC status successful.")
@@ -193,6 +229,57 @@ class BasePlugin:
     def onCommand(self, Unit, Command, Level, Hue):
         # Domoticz.Debug("Command received U="+str(Unit)+" C="+str(Command)+" L= "+str(Level)+" H= "+str(Hue))
         # import web_pdb; web_pdb.set_trace()
+        
+        # Refrigerator part
+        if self.DEVICE_TYPE == "type_fridge":
+            if Unit == 1: # Température du réfrigérateur
+                if Devices[1].sValue != str(Level):
+                    self.lg_device.set_temp_refrigerator_c(Level)
+                    Domoticz.Log(f"New refrigerator temperature set: {Level}°C")
+                    Devices[1].Update(nValue=0, sValue=str(Level))
+
+            if Unit == 2: # Température du congélateur
+                if Devices[2].sValue != str(Level):
+                    self.lg_device.set_temp_freezer_c(Level)
+                    Domoticz.Log(f"New freezer temperature set: {Level}°C")
+                    Devices[2].Update(nValue=0, sValue=str(Level))
+
+
+            if Unit == 3: # Mode IcePlus
+                if Level == 10:
+                    self.lg_device.set_ice_plus_mode("OFF")
+                elif Level == 20:
+                    self.lg_device.set_ice_plus_mode("ICE_PLUS")
+                elif Level == 30:
+                    self.lg_device.set_ice_plus_mode("ICE_PLUS_FREEZE")
+                Devices[3].Update(nValue=1, sValue=str(Level))
+                Domoticz.Log(f"IcePlus mode changed to Level: {Level}")
+
+
+            if Unit == 4: # Filtre à air
+                if Level == 10:
+                    self.lg_device.set_fresh_air_filter("OFF")
+                elif Level == 20:
+                    self.lg_device.set_fresh_air_filter("AUTO")
+                elif Level == 30:
+                    self.lg_device.set_fresh_air_filter("POWER")
+                elif Level == 40:
+                    self.lg_device.set_fresh_air_filter("REPLACE_FILTER")
+                elif Level == 50:
+                    self.lg_device.set_fresh_air_filter("SMARTCARE_ON")
+                Devices[4].Update(nValue=1, sValue=str(Level))
+                Domoticz.Log(f"Fresh air filter mode changed to Level: {Level}")
+
+        
+            if Unit == 6: # Mode économie d’énergie
+                if Command == "On":
+                    self.lg_device.set_energy_saving(True)
+                    Devices[6].Update(nValue=1, sValue="On")
+                    Domoticz.Log("Energy saving mode enabled.")
+                else:
+                    self.lg_device.set_energy_saving(False)
+                    Devices[6].Update(nValue=0, sValue="Off")
+                    Domoticz.Log("Energy saving mode disabled.")
         
         # AC part
         if self.DEVICE_TYPE == "type_ac":
